@@ -1,50 +1,9 @@
 # 32KB RAM on FPGA: From Simulation to System-Level Verification
 
-> Designing, verifying, and implementing a **32KB RAM system** using Verilog with both **file-driven simulation** and **hardware validation (LFSR + UART)**.
+> A complete journey of verifying a **32KB RAM system** across three levels:  
+> **Simulation → On-chip Self-Test → External Interface Validation**
 
 ---
-
-##  Overview
-
-This project implements a complete **32KB RAM (32768 × 8-bit)** and validates it across multiple levels:
-
-- Simulation using file-based verification  
-- FPGA-based **self-checking validation (LFSR)**  
-- UART-based **external system validation (PC ↔ FPGA)**  
-
----
-
-## Architecture Variants
-
-### LFSR-Based (Internal Self-Test)
-
-- Uses **16-bit LFSR** to generate pseudo-random data  
-- Writes data to:
-  - Main RAM (DUT)  
-  - Shadow memory (reference model)  
-- Compares internally on FPGA  
-- No external input required  
-
-✔ Result:
-- PASS → LED ON  
-- FAIL → LED BLINK  
-
----
-
-### UART-Based (External Interface)
-
-- Data sent from **PC → FPGA via UART**  
-- FPGA writes incoming data into RAM  
-- Data read back and transmitted to PC  
-- Python script performs verification  
-
-✔ Enables:
-- Real-time testing  
-- Flexible input patterns  
-- System-level validation  
-
----
-
 ## Motivation
 
 Memory seems simple… until you actually verify it.
@@ -52,254 +11,254 @@ Memory seems simple… until you actually verify it.
 > Did every byte really get written correctly?  
 > Did it come back exactly the same?
 
-This project validates **all 32,768 bytes (262,144 bits)**:
-
-- In **simulation (file-based)**  
-- In **hardware (self-checking logic)**  
-- Over **real communication interface (UART)**  
-
 ---
 
-## Tech Stack
 
-- **Language:** Verilog HDL  
-- **Tools:** Xilinx Vivado  
-- **Simulation:** File-driven Testbench  
-- **Validation:** Python (`compare_files.py`, UART host)  
-- **Hardware:** Artix-7 FPGA  
+## Overview
 
----
+This project implements a **32KB RAM (32768 × 8-bit)** and verifies it using three progressively advanced approaches:
 
-## Project Structure
-
-```
-FPGA/
-├── LFSR/
-│   ├── Code/
-│   │   ├── RAM_32KB.v
-│   │   ├── Top.v
-│   │   └── ram_controller.v
-│   └── Output/
-│       ├── Pass_LED.jpeg
-│       ├── SETUP.jpeg
-│       └── vio_output.png
-│
-├── UART/
-│   ├── Code/
-│   │   ├── RAM_Controller_2.v
-│   │   ├── Top2.v
-│   │   ├── uart_rx.v
-│   │   └── uart_tx.v
-│   └── Output/
-│       └── vio_output_uart.png
-│
-Python/
-├── UART/
-│   ├── uart_host.py
-│   ├── write_data.txt
-│   └── read.txt
-│
-verification(comparison)/
-├── compare_files.py
-│
-Simulation/
-├── Output/
-│   ├── Tb_tcl_console.png
-│   ├── write_data.png
-│   ├── read_data.png
-│   ├── comparison_output.png
-│   └── uart_verification_python.png
-```
+1. **Testbench + Python Verification (Simulation)**
+2. **LFSR-Based Self-Checking (FPGA)**
+3. **UART-Based System Validation (FPGA + Host)**
 
 ---
+## Architecture Variants
 
-## Simulation Verification Flow
+# 1. Simulation-Based Verification (Testbench + Python)
 
-1. Load data from `write_data.txt`  
+### Flow
+
+1. Load input data from `write_data.txt`  
 2. Write all 32KB into RAM  
+3. Read back data into `read.txt`  
+4. Compare using Python script (`compare_files.py`)  
+
+---
+
+### Outputs
+
+#### TCL Console
+
+![TCL Output](Simulation/Output/Tb_tcl_console.png)
+
+---
+
+#### Write Data
+
+![Write](Simulation/Output/write_data.png)
+
+---
+
+#### Read Data
+
+![Read](Simulation/Output/read_data.png)
+
+---
+
+#### Comparison Result
+
+![Compare](Simulation/Output/comparison_output.png)
+
+---
+
+### Result
+
+- PASS → All bytes matched  
+- FAIL → Mismatch detected  
+
+---
+
+#  2. LFSR-Based Self-Checking (FPGA)
+
+### Concept
+
+- Uses **16-bit LFSR** to generate pseudo-random data  
+- Writes to:
+  - RAM (DUT)  
+  - Shadow memory (reference)  
+
+---
+
+###  Flow
+
+1. Generate data internally  
+2. Write into RAM + shadow memory  
 3. Read back data  
-4. Store output in `read.txt`  
-5. Compare using Python script  
-
-Result: **PASS / FAIL**
-
----
-
-## Hardware Verification (LFSR Mode)
-
-### Data Generation
-- Internal **LFSR generator**
-- Deterministic pseudo-random sequence  
-
----
-
-### Write Phase
-- Writes to RAM + shadow memory  
-
----
-
-###  Read Phase
-- Accounts for **1-cycle BRAM latency**  
-
----
-
-###  Compare Phase
-- Compares RAM vs shadow memory  
-
----
-
-###  Output
-- PASS → LED ON  
-- FAIL → LED BLINK  
-
----
-
-## 🔌 UART-Based Verification Flow
-
-### FPGA Side
-
-1. Receive data via `uart_rx`  
-2. Write data into RAM  
-3. Read back data  
-4. Transmit via `uart_tx`  
-
----
-
-### Python Host
-
-1. Load `write_data.txt`  
-2. Send data over UART  
-3. Receive FPGA output  
-4. Save as `read.txt`  
-5. Compare with original  
+4. Compare internally  
 
 ---
 
 ### Output
 
-- PASS → All bytes match  
-- FAIL → Mismatch detected  
-- Optional: Bit Error Rate (BER)  
+- PASS → LED ON  
+- FAIL → LED BLINK  
 
 ---
 
-## Results
+### 📊 Hardware Results
 
-### Simulation Output
-
-![Simulation Console](Simulation/Output/Tb_tcl_console.png)
-
----
-
-### Write Data
-
-![Write Data](Simulation/Output/write_data.png)
-
----
-
-### Read Data
-
-![Read Data](Simulation/Output/read_data.png)
-
----
-
-### Comparison Output
-
-![Comparison](Simulation/Output/comparison_output.png)
-
----
-
-### UART Verification
-
-![UART Verification](Simulation/Output/uart_verification_python.png)
-
----
-
-## FPGA Implementation
-
-### Hardware Setup
+#### Setup
 
 ![Setup](FPGA/LFSR/Output/SETUP.jpeg)
 
 ---
 
-### PASS Indication
+#### PASS LED
 
-![Pass LED](FPGA/LFSR/Output/Pass_LED.jpeg)
-
----
-
-### VIO Debug Output
-
-![VIO Output](FPGA/LFSR/Output/vio_output.png)
+![Pass](FPGA/LFSR/Output/Pass_LED.jpeg)
 
 ---
 
-##  How to Run
+#### VIO Output
 
-### Simulation
-
-1. Open project in Vivado  
-2. Add RTL + Testbench  
-3. Run simulation  
-4. Execute `compare_files.py`  
+![VIO](FPGA/LFSR/Output/vio_output.png)
 
 ---
 
-### FPGA (LFSR Mode)
+# 🔌 3. UART-Based System-Level Verification
+
+###  Concept
+
+- External data sent from PC → FPGA  
+- FPGA performs **on-chip verification**  
+- Python performs **secondary validation**
+
+---
+
+##  Complete Flow
+
+### FPGA Side
+
+1. Receive data via `uart_rx`  
+2. Write into RAM  
+3. Read back data  
+4. Compare internally  
+
+---
+
+### FPGA Output
+
+-  PASS → LED ON (visible on board + VIO)  
+-  FAIL → LED BLINK  
+
+---
+
+### Python Host
+
+1. Send `write_data.txt` via UART  
+2. Receive data from FPGA  
+3. Store as `read.txt`  
+4. Compare with original  
+
+---
+
+### UART Verification Output
+
+![UART Verification](Simulation/Output/uart_verification_python.png)
+
+---
+
+##  Key Insight
+
+> The FPGA performs **primary verification (on-chip)** using comparison logic,  
+> while Python provides **secondary verification (host-side)**.
+
+---
+
+# Key Concepts Used
+
+- Memory Design (BRAM behavior)  
+- FSM-based control  
+- LFSR data generation  
+- Shadow memory (golden reference)  
+- UART protocol (8N1)  
+- File-based verification  
+- Hardware-software co-validation  
+
+---
+
+# Project Structure
+
+```
+FPGA/
+├── LFSR/
+├── UART/
+
+Simulation/
+├── Output/
+
+RTL/
+TB/
+
+Python/
+verification/
+```
+
+---
+
+#  How to Run
+
+## Simulation
+
+1. Run testbench in Vivado  
+2. Generate `read.txt`  
+3. Run:
+```
+python compare_files.py
+```
+
+---
+
+## LFSR (FPGA)
 
 1. Generate bitstream  
 2. Program FPGA  
-3. Press reset  
-4. Observe LED status  
+3. Observe LED / VIO  
 
 ---
 
-### UART Mode
+## UART Mode
 
 1. Program FPGA  
-2. Run `uart_host.py`  
+2. Run:
+```
+python uart_host.py
+```
 3. Send data  
-4. Receive and compare output  
+4. Observe:
+   - LED (FPGA result)  
+   - Python output  
 
 ---
 
-## Challenges
+# Why This Project Stands Out
 
-- File I/O in simulation  
-- Handling BRAM latency  
-- UART timing synchronization  
-- Data alignment between FPGA and Python  
-- Debugging mismatches across 32K entries  
-
----
-
-## Future Improvements
-
-- AXI interface integration  
-- Dual-port RAM  
-- Burst transactions  
-- CRC/error detection over UART  
-- Real-time debug console  
-
----
-
-##  Why This Project Stands Out
-
-Most RAM projects stop at simulation.
+Most projects stop at simulation.
 
 This project:
 
-- Verifies memory in **simulation + FPGA + UART**  
-- Implements **self-checking architecture (BIST-like)**  
-- Integrates **hardware + software validation**  
+- Verifies memory in **simulation + FPGA + UART**
+- Implements **self-checking hardware (BIST-like)**
+- Combines **RTL + hardware + software validation**
 
-> This is not just RTL — this is **design + verification + system-level validation**
+> This is not just RTL design — this is **system-level verification**
 
 ---
 
-## Author
+#  Future Improvements
+
+- AXI interface  
+- Dual-port RAM  
+- Burst transfers  
+- CRC-based UART validation  
+- Error reporting system  
+
+---
+
+# Author
 
 **Ramiksha Shetty**
 
 ---
+
