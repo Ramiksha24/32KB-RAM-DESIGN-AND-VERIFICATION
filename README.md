@@ -23,7 +23,7 @@ This project implements a **32KB RAM (32768 × 8-bit)** and verifies it using th
 3. **UART-Based System Validation (FPGA + Host)**
 
 ---
-## Architecture Variants
+# Architecture Variants
 
 # 1. Simulation-Based Verification (Testbench + Python)
 
